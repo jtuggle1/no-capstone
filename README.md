@@ -8,6 +8,7 @@ the producer will stop with a key board interruption.
 Access grafana:
 
 http://localhost:3000/
+
 Connect to prometheus 
 Prometheus server URL :  http://prometheus:9090
 
