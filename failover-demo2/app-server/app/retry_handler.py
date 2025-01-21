@@ -69,33 +69,25 @@ class RetryHandler:
         """Process transactions in the retry queue."""
         while self.is_running:
             try:
-                # Get the next retry item but don't remove it from queue yet
                 retry_item = await self.retry_queue.get()
-                
-                # Check if it's time to retry
                 if datetime.utcnow() >= retry_item['next_retry']:
                     transaction = retry_item['transaction']
                     retry_count = retry_item['retry_count']
-                    
-                    # Attempt to process the transaction
+
                     success = await self._retry_transaction(transaction, retry_count)
-                    
                     if not success and retry_count + 1 < self.max_retries:
-                        # If failed but still has retries, add back to queue with increased count
                         await self.add_failed_transaction(transaction, retry_count + 1)
                     elif not success:
-                        # If failed and no more retries, mark as permanently failed
                         await self._mark_permanently_failed(transaction)
                 else:
-                    # If not time yet, put it back in the queue
                     await self.retry_queue.put(retry_item)
-                
-                # Small delay to prevent busy waiting
-                await asyncio.sleep(1)
-                
+
+                # Small delay for retries
+                await asyncio.sleep(self.retry_delay)
             except Exception as e:
                 logger.error(f"Error in retry queue processing: {str(e)}")
-                await asyncio.sleep(1)
+                await asyncio.sleep(self.retry_delay)
+
     
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     async def _retry_transaction(self, transaction: Dict[str, Any], retry_count: int) -> bool:

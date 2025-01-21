@@ -19,6 +19,7 @@ wait_for_mongo() {
 # Wait for both MongoDB nodes
 wait_for_mongo "mongo-1:27017"
 wait_for_mongo "mongo-2:27017"
+sleep 10
 
 # Initialize replica set
 echo "$(date) - Initializing replica set on mongo-1:27017..."

@@ -13,6 +13,15 @@ class MongoDBHandler:
         self.client = None
         self.db = None
         self.collection = None
+    
+    async def is_healthy(self) -> bool:
+        """Check if MongoDB is healthy."""
+        try:
+            await self.client.admin.command('ping')
+            return True
+        except Exception as e:
+            logger.error(f"MongoDB health check failed: {str(e)}")
+            return False
 
     async def connect(self):
         """Connect to MongoDB."""

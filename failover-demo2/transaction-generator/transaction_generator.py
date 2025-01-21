@@ -48,7 +48,7 @@ def main():
     # Start Prometheus metrics server
     start_http_server(8000)
     
-    generator = TransactionGenerator("http://load-balancer:8080")
+    generator = TransactionGenerator("http://nginx:80")
     
     # Continuous transaction generation
     while True:

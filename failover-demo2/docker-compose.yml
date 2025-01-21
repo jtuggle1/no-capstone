@@ -38,7 +38,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - frontend
       - backend
@@ -67,12 +67,14 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9092
       - SERVER_ID=1
     networks:
+      - frontend
       - backend
       - monitoring
       - db_net
     depends_on:
       - mongo-1
       - mongo-2
+      - kafka-exporter
     deploy:
       restart_policy:
         condition: on-failure
@@ -90,12 +92,14 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9092
       - SERVER_ID=2
     networks:
+      - frontend
       - backend
       - monitoring
       - db_net
     depends_on:
       - mongo-1
       - mongo-2
+      - kafka-exporter
     deploy:
       restart_policy:
         condition: on-failure
@@ -271,9 +275,11 @@ services:
     command:
       - '--kafka.server=kafka-1:9092'
       - '--kafka.server=kafka-2:9092'
+    restart: always 
     depends_on:
       - kafka-1
       - kafka-2
+      - mongo-init
     networks:
       - monitoring
       - kafka_net

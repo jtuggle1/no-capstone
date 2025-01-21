@@ -64,13 +64,16 @@ async def get_retry_metrics():
     """Get metrics about transaction retries."""
     return await mongo_handler.get_retry_metrics()
 
-@app.get("/health")
+@app.get("/health", response_model=dict)
 async def health_check():
-    """Health check endpoint."""
-    is_healthy = await mongo_handler.is_healthy() and await kafka_handler.is_healthy()
-    if not is_healthy:
-        raise HTTPException(status_code=503, detail="Service unhealthy")
-    return {"status": "healthy"}
+    is_mongo_healthy = await mongo_handler.is_healthy()
+    is_kafka_healthy = await kafka_handler.is_healthy()
+    return {
+        "mongo": is_mongo_healthy,
+        "kafka": is_kafka_healthy,
+        "status": "ok" if is_mongo_healthy and is_kafka_healthy else "degraded"
+    }
+
 
 @app.post("/transaction", response_model=TransactionResponse)
 async def process_transaction(transaction: Transaction, background_tasks: BackgroundTasks):
