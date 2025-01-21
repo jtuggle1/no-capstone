@@ -174,3 +174,16 @@ class MongoDBHandler:
                 },
                 {
                     "$group": {
+                        "_id": None,
+                        "average_time": {
+                            "$avg": "$processing_time"
+                        }
+                    }
+                }
+            ]
+
+            result = await self.collection.aggregate(pipeline).to_list(length=1)
+            return result[0]["average_time"] if result else 0.0
+        except Exception as e:
+            print(f"Error calculating average processing time: {e}")
+            return 0.0

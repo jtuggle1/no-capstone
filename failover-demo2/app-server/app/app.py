@@ -2,8 +2,6 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from contextlib import asynccontextmanager
-from typing import List, Optional
-import asyncio
 import logging
 
 from .config import Settings
@@ -28,19 +26,19 @@ retry_handler = RetryHandler(kafka_handler, mongo_handler, settings)
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up application...")
-    
+
     # Initialize MongoDB first
     await mongo_handler.connect()
-    
+
     # Initialize Kafka and set MongoDB handler
     await kafka_handler.start()
     kafka_handler.set_mongo_handler(mongo_handler)
-    
+
     # Start retry handler
     await retry_handler.start()
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down application...")
     await retry_handler.stop()
@@ -80,20 +78,20 @@ async def process_transaction(transaction: Transaction, background_tasks: Backgr
     try:
         # Log transaction receipt
         logger.info(f"Received transaction: {transaction.transaction_id}")
-        
+
         # Send to Kafka in background
         background_tasks.add_task(
             kafka_handler.send_message,
             "transactions",
             transaction.model_dump()
         )
-        
+
         return TransactionResponse(
             transaction_id=transaction.transaction_id,
             status="accepted",
             message="Transaction is being processed"
         )
-    
+
     except Exception as e:
         logger.error(f"Error processing transaction: {str(e)}")
         raise HTTPException(
@@ -108,12 +106,3 @@ async def get_transaction(transaction_id: str):
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return transaction
-
-@app.get("/metrics/transactions")
-async def get_transaction_metrics():
-    """Get transaction processing metrics."""
-    return {
-        "processed": await mongo_handler.get_processed_count(),
-        "failed": await mongo_handler.get_failed_count(),
-        "average_processing_time": await mongo_handler.get_average_processing_time()
-    }

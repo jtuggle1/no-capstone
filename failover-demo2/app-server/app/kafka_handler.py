@@ -16,7 +16,7 @@ class KafkaHandler:
         self.consumer = None
         self.is_running = False
         self._consumer_task = None
-	self.mongo_handler = None
+        self.mongo_handler = None  
 
     # Add setter for MongoDB handler
     def set_mongo_handler(self, mongo_handler):
