@@ -1,7 +1,7 @@
 import random
 import time
 from kafka import KafkaProducer
-from prometheus_client import start_http_server, Counter
+from prometheus_client import start_http_server, Counter, Histogram
 import json
 from faker import Faker
 
@@ -19,6 +19,12 @@ producer = KafkaProducer(
 transactions_sent = Counter(
     'transactions_sent',
     'Number of transactions sent by the producer',
+    ['producer_id']
+)
+
+transaction_amounts = Histogram(
+    'transaction_amounts',
+    'Distribution of transaction amounts',
     ['producer_id']
 )
 
@@ -40,6 +46,7 @@ def main():
             transaction = generate_fake_transaction()
             producer.send(TOPIC, value=transaction)
             transactions_sent.labels(producer_id="producer1").inc()
+            transaction_amounts.labels(producer_id="producer1").observe(transaction["amount"])
             print(f"Sent: {transaction}")
             time.sleep(random.randint(1, 3))
     except KeyboardInterrupt:
