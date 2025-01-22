@@ -34,7 +34,7 @@ class TransactionGenerator:
                 response = requests.post(
                     f"{self.load_balancer_url}/transaction",
                     json=transaction,
-                    timeout=5
+                    timeout=15
                 )
                 response.raise_for_status()
                 TRANSACTIONS_GENERATED.inc()
