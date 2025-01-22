@@ -47,15 +47,15 @@ class TransactionGenerator:
 def main():
     # Start Prometheus metrics server
     start_http_server(8000)
-    
+
     generator = TransactionGenerator("http://nginx:80")
-    
+
     # Continuous transaction generation
     while True:
         transaction = generator.generate_transaction()
         generator.send_transaction(transaction)
-        # Random sleep to simulate varying load
-        time.sleep(random.uniform(0.1, 0.5))
+        # Enforce a 2-second interval between transactions
+        time.sleep(2)
 
 if __name__ == "__main__":
     main()
