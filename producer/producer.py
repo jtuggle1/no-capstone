@@ -1,7 +1,7 @@
 import random
 import time
 from kafka import KafkaProducer
-from prometheus_client import start_http_server, Counter, Histogram
+from prometheus_client import start_http_server, Counter, Histogram, Summary
 import json
 from faker import Faker
 
@@ -28,6 +28,18 @@ transaction_amounts = Histogram(
     ['producer_id']
 )
 
+send_latency = Summary(
+    'transaction_send_latency_seconds',
+    'Time taken to send transactions',
+    ['producer_id']
+)
+
+errors_encountered = Counter(
+    'producer_errors',
+    'Number of errors encountered by the producer',
+    ['producer_id']
+)
+
 # Expose metrics on port 8001
 start_http_server(8001)
 
@@ -44,10 +56,16 @@ def main():
     try:
         while True:
             transaction = generate_fake_transaction()
-            producer.send(TOPIC, value=transaction)
-            transactions_sent.labels(producer_id="producer1").inc()
-            transaction_amounts.labels(producer_id="producer1").observe(transaction["amount"])
-            print(f"Sent: {transaction}")
+            start_time = time.time()
+            try:
+                producer.send(TOPIC, value=transaction)
+                transactions_sent.labels(producer_id="producer1").inc()
+                transaction_amounts.labels(producer_id="producer1").observe(transaction["amount"])
+                send_latency.labels(producer_id="producer1").observe(time.time() - start_time)
+                print(f"Sent: {transaction}")
+            except Exception as e:
+                errors_encountered.labels(producer_id="producer1").inc()
+                print(f"Error: {e}")
             time.sleep(random.randint(1, 3))
     except KeyboardInterrupt:
         print("\nStopping producer...")
