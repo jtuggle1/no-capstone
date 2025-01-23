@@ -161,6 +161,27 @@ services:
       - monitoring
     volumes:
       - kafka2_data:/var/lib/kafka/data
+      
+  kafka-3:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092,PLAINTEXT_HOST://localhost:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - kafka_net
+      - backend
+      - monitoring
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
 
   # MongoDB Replica Set
 
@@ -295,6 +316,7 @@ volumes:
   zookeeper_data:
   kafka1_data:
   kafka2_data:
+  kafka3_data:
   mongo1_data:
   mongo2_data:
   prometheus_data:
