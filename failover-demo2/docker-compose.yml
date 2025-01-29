@@ -285,11 +285,14 @@ services:
     image: percona/mongodb_exporter:0.43.1
     command:
       - '--mongodb.uri=mongodb://mongo-1:27017'
+      - '--log.level=debug'
     networks:
       - monitoring
       - db_net
     depends_on:
       - mongo-1
+    environment:
+      - MONGODB_URI=mongodb://mongo-1:27017
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
