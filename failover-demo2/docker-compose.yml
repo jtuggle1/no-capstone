@@ -235,7 +235,46 @@ services:
       - MONGO_PRIMARY_HOST=mongo-1:27017
       - MONGO_SECONDARY_HOST=mongo-2:27017
     restart: "on-failure"
-  
+    
+  mysql:
+    image: mysql:latest
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: kafka_sink
+      MYSQL_USER: kafkauser
+      MYSQL_PASSWORD: kafkapassword
+    ports:
+      - "3307:3306"
+    networks:
+      - db_net
+      - monitoring
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-mysql-consumer:
+    build:
+      context: ./mysql-consumer
+      dockerfile: Dockerfile.consumer
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - mysql
+    networks:
+      - kafka_net
+      - db_net
+    restart: unless-stopped
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9092
+      - KAFKA_TOPIC=transactions
+      - KAFKA_GROUP_ID=mysql-consumer-group
 
   # Monitoring Stack
   prometheus:
@@ -309,6 +348,18 @@ services:
       - monitoring
       - kafka_net
 
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=kafkauser:kafkapassword@(mysql-db:3306)/kafka_sink
+    ports:
+      - "9104:9104"
+    networks:
+      - db_net
+      - monitoring
+    depends_on:
+      - mysql
+
 networks:
   frontend:
   backend:
@@ -325,3 +376,4 @@ volumes:
   mongo2_data:
   prometheus_data:
   grafana_data:
+  mysql_data:
