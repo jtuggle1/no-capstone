@@ -6,6 +6,7 @@ import logging
 import asyncio
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_exponential
+#from mysql_handler import MySQLHandler
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class KafkaHandler:
         self.is_running = False
         self._consumer_task = None
         self.mongo_handler = None  # Placeholder for MongoDB handler
+      #  self.mysql_handler = MySQLHandler()
 
     def set_mongo_handler(self, mongo_handler):
         """Set the MongoDB handler for persisting transactions."""
@@ -126,7 +128,16 @@ class KafkaHandler:
                     logger.error(f"Failed to save transaction {transaction_data['transaction_id']}")
             else:
                 logger.error("MongoDB handler not set - cannot persist transaction")
-
+            
+         #   if self.mysql_handler:
+            #    saved = self.mysql_handler.save_transaction(transaction_data)
+             #   if saved:
+              #      self.mysql_handler.update_transaction_status(transaction_data['transaction_id'], 'completed')
+             #       logger.info(f"Transaction {transaction_data['transaction_id']} processed and saved to MySQL")
+             #   else:
+              #      self.mysql_handler.update_transaction_status(transaction_data['transaction_id'], 'failed')
+               #     logger.error(f"Failed to save transaction {transaction_data['transaction_id']} in MySQL")
+#
         except Exception as e:
             logger.error(f"Error processing message: {e}")
             if self.mongo_handler and 'transaction_id' in message.value:
