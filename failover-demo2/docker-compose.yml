@@ -13,6 +13,7 @@ services:
       - nginx
     networks:
       - frontend
+      - monitoring
     deploy:
       restart_policy:
         condition: on-failure
@@ -28,6 +29,7 @@ services:
       - nginx
     networks:
       - frontend
+      - monitoring
     deploy:
       restart_policy:
         condition: on-failure
